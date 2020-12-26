@@ -1,6 +1,14 @@
+"""
+Run retrospective analyses with many models--either all resnets: 
+    $ python manymodels_retrospective.py resnets
+or multiple architectures: 
+    $ python manymodels_retrospective.py multiple
+
+Relic code hobbled together; it's messy--sorry! 
+"""
 import pickle, pandas 
 import os, numpy as np 
-import torch 
+import torch, sys 
 import torchvision.models as models
 import torch, torch.nn as nn
 import colour 
@@ -285,8 +293,8 @@ def evaluate_trial(trial_responses, correct_index=0):
 def define_model(model, pretrained=True):
     model = model(pretrained=pretrained).eval()
     #print(model)
-    modules=list(model.children())[:-2]
-    model=nn.Sequential(*modules)
+    #modules=list(model.children())#[:-2]
+    #model=nn.Sequential(*modules)
     for p in model.parameters(): p.requires_grad = False
     #print(model)
     return model
@@ -297,19 +305,35 @@ if __name__ == '__main__':
     experiments = get_experiments()
     modeling_results = {} 
 
-
-    models = {'18': models.resnet18, 
-              '34': models.resnet34, 
-              '50': models.resnet50, 
-              '101': models.resnet101, 
-              '152': models.resnet152}
+    if sys.argv[1] == 'resnets':  
+        
+        models = {'18': models.resnet18, 
+                  '34': models.resnet34, 
+                  '50': models.resnet50, 
+                  '101': models.resnet101, 
+                  '152': models.resnet152}
+        savename = 'resnets'
+    
+    else: 
+    
+        models = {'alexnet': models.alexnet, 
+                  'densenet_201': models.densenet201, 
+                  'lenet': models.googlenet, 
+                  'inception_v3': models.inception_v3, 
+                  'masnet_10': models.mnasnet1_0, 
+                  'mobilenet_v2': models.mobilenet_v2, 
+                  'resnet_34': models.resnet34, 
+                  'shufflenet_v2x10': models.shufflenet_v2_x1_0, 
+                  'squeezenet_11': models.squeezenet1_1, 
+                  'vgg_19': models.vgg19} 
+        savename = 'manymodels'
     
     retrospective = {} 
     for i_model in models: 
         
-        print('\t resnet %s...'%i_model) 
+        print('\t %s %s...'%(sys.argv[1], i_model)) 
         model = define_model(models[i_model])
         retrospective[i_model] = model_all_experiments(model, experiments)
 
-    with open('retrospective.pickle', 'wb') as handle:
+    with open('retrospective_%s.pickle'%savename, 'wb') as handle:
         pickle.dump(retrospective, handle)

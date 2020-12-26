@@ -1,5 +1,5 @@
 from sklearn.linear_model import LinearRegression
-import colour, pickle, pandas, os, sys
+import colour, pickle, pandas, os, sys, matplotlib
 from scipy.stats.mstats import zscore
 import numpy as np
 import matplotlib.pyplot as plt
@@ -351,6 +351,7 @@ def focal_neuroanatomical_dependencies(pls_fits, retrospective, meta_statistics,
     save_location = os.path.join(_location, 'figure_three.pdf')
     plt.savefig(save_location, format='pdf', bbox_inches = "tight")
 
+
 def high_throughput_results(novel_summary, _location):
 
     def plot_nice_line(model_, params={}, title=''):
@@ -359,60 +360,44 @@ def high_throughput_results(novel_summary, _location):
         plt.plot(xs, xs * m + b, **params)
 
     color = { 'v4':'#c9d1d3', 'fc6': '#8b2f97', 'prc': '#00909e'}
+    _dotparams = {'edgecolor':'black', 'linewidth': .4, 's':40}
+    plt.figure(figsize=[14, 4])
 
-    plt.figure(figsize=[17, 4])
     for plot, region in enumerate(list(color), 1):
 
-        ax = plt.subplot(1, 5, plot)
+        ax = plt.subplot(1, 4, plot)
         x_ = novel_summary['it'].values
         y_ = novel_summary[region].values
+
         plt.plot([.2, 1], [.2, 1], color='lightgrey', linestyle=':', zorder=-1)
-        _dotparams = {'edgecolor':'black', 'linewidth': .4, 's':35, 'color':color[region]}
-        plt.scatter(x=x_, y=y_, **_dotparams)
-        plt.xlabel('IT-Supported performance', fontsize=15, labelpad=10)
-        if region == 'fc6':
-            plt.ylabel('Model Performance', fontsize=13, labelpad=1)
-        elif region == 'prc':
-            plt.ylabel('PRC-Intact Performance', fontsize=13, labelpad=2)
-        else:
-            plt.ylabel('%s-Supported Performance'%region.upper(), fontsize=12)
+
+        plt.scatter(x=x_, y=y_, **_dotparams, color=color[region])
+        plt.xlabel('IT-Supported Performance', fontsize=16, labelpad=10)
+        plt.ylabel('%s Performance'
+                   %{'v4':'V4-Supported', 'fc6':'Model', 'prc':'PRC-intact'}[region],
+                   fontsize=15, labelpad=2)
 
         ax.text(-0.11, 1.08, ['','a','b','c'][plot], transform=ax.transAxes,fontsize=16, va='top', ha='right')
+        plt.yticks([.2, .4, .6, .8, 1.], [.2, .4, .6, .8, 1.])
 
-        ax = plt.subplot(1, 5, 4)
-        _lineparams = {'linewidth':7, 'zorder':-1, 'color':color[region], 'label':region.upper(),
-                       'solid_capstyle': 'round'}
-
-        x_ = novel_summary['fc6'].values
-        if region == 'fc6':
-            y_ = novel_summary['it'].values
-            _lineparams['label']='IT'
-        else:
-            y_ = novel_summary[region].values
-
-        _model = LinearRegression().fit(np.reshape(x_, (-1,1)), np.reshape(y_, (-1, 1)))
-        plot_nice_line(_model, _lineparams)
-
-    plt.ylabel('VVS-Supported Performance', fontsize=12, labelpad=0)
-    plt.xlabel('Model Performance', fontsize=15, labelpad=10)
-    plt.plot([.2, 1], [.2, 1], color='lightgrey', linestyle=':', zorder=-3)
-    plt.legend(loc=4, title='READOUT', framealpha=0, fontsize=9, title_fontsize=9)
-    ax.text(-0.11, 1.08, 'd', transform=ax.transAxes,fontsize=16, va='top', ha='right')
-    ax = plt.subplot(155)
-    _dotparams = {'edgecolor':'black', 'linewidth': .4, 's':35}
+    ax = plt.subplot(144)
     _x = novel_summary['delta_prc_it']
-    _y = novel_summary['rt']
+    _y = novel_summary['rt'] / 1000
     plt.scatter(x=novel_summary['delta_prc_v4'], y=_y, facecolor=color['v4'], edgecolor='', label='V4', zorder=-2)
     plt.scatter(x=_x, y=_y, color=color['fc6'], **_dotparams, label='IT')
-    plt.ylim(min(_y)-200,  max(_y)+200)
+    plt.ylim(min(_y)-.200,  max(_y)+.200)
     plt.xlim(min(_x)-.08,  max(_x)+.08)
     plt.legend(framealpha=0, title='READOUT')
     #plt.xlabel('PRC-intact — VVS-supported Accuracy', fontsize=12)
     plt.xlabel('$\Delta_{\mathregular{PRC-VVS}}$'' Performance', fontsize=15, labelpad=10)
-    plt.ylabel('Reaction Time (ms)', fontsize=12, labelpad=-2)
-    plt.yticks(size=7)
+    plt.ylabel('\n\nReaction Time (s)', fontsize=15, labelpad=3)
     plt.subplots_adjust(right=1.2)
-    ax.text(-0.11, 1.08, 'e', transform=ax.transAxes,fontsize=16, va='top', ha='right')
+    ax.text(-0.11, 1.08, 'd', transform=ax.transAxes,fontsize=16, va='top', ha='right')
+    ax.yaxis.set_major_formatter(
+            matplotlib.ticker.FormatStrFormatter('%.1f'))
+    save_location = os.path.join(_location, 'F5.pdf')
+    plt.savefig(save_location, format='pdf', bbox_inches = "tight")
+
 
     save_location = os.path.join(_location, 'figure_five.pdf')
     plt.savefig(save_location, format='pdf', bbox_inches = "tight")
